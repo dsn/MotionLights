@@ -9,8 +9,9 @@
 // Number of LEDs
 #define NUM_LEDS  21
 
-int calibrationTime = 30; // Seconds
-int pause           = 10; // Seconds
+int ambientThreshold = 400;
+int calibrationTime  =   5; // Seconds
+int pause            =  10; // Seconds
 
 // End User Configurable settings
 
@@ -34,45 +35,41 @@ void setup() {
 
   pinMode(PIR, INPUT);
 
-  Serial.print("calibrating sensor ");
+  Serial.print("Calibrating Sensors ");
   for (int i = 0; i < calibrationTime; i++) {
     digitalRead(PIR);
     analogRead(PHOTO);
     Serial.print(".");
     delay(1000);
   }
-  Serial.println(" done");
-  Serial.println("SENSOR ACTIVE");
+  Serial.println(" - Completed");
+  Serial.println("Sensors Active");
 }
 
 void loop() {
   int light = analogRead(PHOTO);
 
-  if (light < 400) {
-    if (digitalRead(PIR) == HIGH) {
-      if (lockLow) {
-        //makes sure we wait for a transition to LOW before any further output is made:
-        lockLow = false;
+  if (digitalRead(PIR) == HIGH) {
+    if (lockLow) {
+      lockLow = false;
+      if (light < ambientThreshold) {
         fade(0xff, 0xff, 0xff, IN);
       }
-      takeLowTime = true;
     }
+    takeLowTime = true;
   }
 
   if (digitalRead(PIR) == LOW) {
     if (takeLowTime) {
-      lowIn = millis();          //save the time of the transition from high to LOW
-      takeLowTime = false;       //make sure this is only done at the start of a LOW phase
+      lowIn = millis();
+      takeLowTime = false;
     }
-    
-    //if the sensor is low for more than the given pause, there has been no further motion.
+
     if (!lockLow && millis() - lowIn > (pause * 1000)) {
-      // Only fade out if new motion has ended
       lockLow = true;
       fade(0xff, 0xff, 0xff, OUT);
     }
   }
-  delay(250);
 }
 
 void fade(byte red, byte green, byte blue, FadeDirection fadeDirection) {
@@ -90,7 +87,7 @@ void fade(byte red, byte green, byte blue, FadeDirection fadeDirection) {
       delay(5);
     }
   }
-  
+
   if (fadeDirection == OUT) {
     for (int k = 255; k >= 0; k--) {
       r = (k / 256.0) * red;
