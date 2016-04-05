@@ -9,7 +9,7 @@
 // Number of LEDs
 #define NUM_LEDS  21
 
-int calibrationTime = 5; // Seconds
+int calibrationTime = 30; // Seconds
 int pause           = 10; // Seconds
 
 // End User Configurable settings
